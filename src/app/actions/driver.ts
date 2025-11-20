@@ -39,7 +39,7 @@ export async function addVehicle(formData: FormData) {
   }
 
   const dbUser = await db.query.users.findFirst({
-    where: eq(users.clerkId, user.id),
+    where: eq(users.stackId, user.id),
   });
 
   if (!dbUser) {

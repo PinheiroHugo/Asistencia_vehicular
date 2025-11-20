@@ -11,7 +11,7 @@ export async function submitReview(requestId: number, rating: number, comment: s
   if (!user) throw new Error("Unauthorized");
 
   const dbUser = await db.query.users.findFirst({
-    where: eq(users.clerkId, user.id),
+    where: eq(users.stackId, user.id),
   });
 
   if (!dbUser) throw new Error("User not found");

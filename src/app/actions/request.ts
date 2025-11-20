@@ -17,7 +17,7 @@ export async function createAssistanceRequest(data: {
   if (!user) throw new Error("Unauthorized");
 
   const dbUser = await db.query.users.findFirst({
-    where: eq(users.clerkId, user.id),
+    where: eq(users.stackId, user.id),
     with: {
       vehicles: true
     }

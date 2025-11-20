@@ -18,13 +18,13 @@ export async function completeOnboarding(formData: FormData) {
 
   // Sync user to DB
   const [newUser] = await db.insert(users).values({
-    clerkId: user.id,
+    stackId: user.id,
     email: user.primaryEmail!,
     fullName: user.displayName || "",
     role: role,
     avatarUrl: user.profileImageUrl,
   }).onConflictDoUpdate({
-    target: users.clerkId,
+    target: users.stackId,
     set: { role: role },
   }).returning();
 

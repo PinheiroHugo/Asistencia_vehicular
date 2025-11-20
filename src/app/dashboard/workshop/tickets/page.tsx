@@ -16,7 +16,7 @@ export default async function WorkshopTicketsPage() {
   if (!user) return null;
 
   const dbUser = await db.query.users.findFirst({
-    where: eq(users.clerkId, user.id),
+    where: eq(users.stackId, user.id),
   });
 
   if (!dbUser) return <div>Usuario no encontrado</div>;

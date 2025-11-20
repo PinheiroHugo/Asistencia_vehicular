@@ -21,7 +21,7 @@ export default async function WorkshopDashboard() {
 
   // Fetch recent appointments for the table
   const user = await stackServerApp.getUser();
-  const dbUser = await db.query.users.findFirst({ where: eq(users.clerkId, user!.id) });
+  const dbUser = await db.query.users.findFirst({ where: eq(users.stackId, user!.id) });
   const workshop = await db.query.workshops.findFirst({ where: eq(workshops.ownerId, dbUser!.id) });
   
   const recentActivity = await db.query.appointments.findMany({

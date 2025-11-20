@@ -13,7 +13,7 @@ export default async function Home() {
 
   if (user) {
     const dbUser = await db.query.users.findFirst({
-      where: eq(users.clerkId, user.id),
+      where: eq(users.stackId, user.id),
     });
 
     if (dbUser) {
