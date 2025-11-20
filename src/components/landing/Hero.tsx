@@ -52,7 +52,7 @@ export function Hero() {
                 <div className="aspect-video overflow-hidden rounded-lg bg-muted flex items-center justify-center relative">
                     <img 
                       src="https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?q=80&w=1600&auto=format&fit=crop" 
-                      alt="Hugo Automotriz Luxury SUV" 
+                      alt="Asistencia Vehicular AI Luxury SUV" 
                       className="object-cover w-full h-full"
                     />
                 </div>

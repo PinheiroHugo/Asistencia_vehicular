@@ -9,8 +9,8 @@ export default function Home() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl">
-            <span className="text-primary">HUGO</span>
-            <span>AUTOMOTRIZ</span>
+            <span className="text-primary">Asistencia</span>
+            <span>Vehicular AI</span>
           </div>
           <nav className="hidden md:flex gap-6 text-sm font-medium">
             <Link href="#servicios" className="hover:text-primary transition-colors">Servicios</Link>
@@ -36,7 +36,7 @@ export default function Home() {
         <div className="container mx-auto px-4 py-10 md:py-16">
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             <div>
-              <h3 className="text-lg font-bold mb-4">Hugo Automotriz</h3>
+              <h3 className="text-lg font-bold mb-4">Asistencia Vehicular AI</h3>
               <p className="text-sm text-muted-foreground">
                 La plataforma líder en Bolivia para asistencia vehicular y gestión de talleres.
               </p>

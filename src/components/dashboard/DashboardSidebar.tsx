@@ -20,7 +20,7 @@ export function DashboardSidebar({ role }: SidebarProps) {
   const driverLinks = [
     { href: "/dashboard/driver", label: "Inicio", icon: Home },
     { href: "/dashboard/request", label: "Pedir Asistencia", icon: Car },
-    { href: "/dashboard/mechanic-ai", label: "Mecánico IA", icon: Bot },
+    { href: "/dashboard/mechanic-ai", label: "Asistencia Vehicular AI", icon: Bot },
     { href: "/dashboard/workshops", label: "Talleres", icon: Wrench },
     { href: "/dashboard/driver/history", label: "Historial", icon: History },
     { href: "/dashboard/driver/settings", label: "Configuración", icon: Settings },
@@ -38,7 +38,7 @@ export function DashboardSidebar({ role }: SidebarProps) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full py-4">
       <div className="px-6 py-2">
-        <h2 className="text-2xl font-bold tracking-tight text-primary">Hugo</h2>
+        <h2 className="text-xl font-bold tracking-tight text-primary">Asistencia Vehicular AI</h2>
       </div>
       <ScrollArea className="flex-1 px-3 py-4">
         <div className="space-y-1">
