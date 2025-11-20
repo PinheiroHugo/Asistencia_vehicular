@@ -2,8 +2,33 @@ import { Hero } from "@/components/landing/Hero";
 import { Services } from "@/components/landing/Services";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import Link from "next/link";
+import { stackServerApp } from "@/stack";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+export default async function Home() {
+  const user = await stackServerApp.getUser();
+
+  if (user) {
+    const dbUser = await db.query.users.findFirst({
+      where: eq(users.clerkId, user.id),
+    });
+
+    if (dbUser) {
+      if (dbUser.role === "driver") {
+        redirect("/dashboard/driver");
+      } else if (dbUser.role === "workshop_owner") {
+        redirect("/dashboard/workshop");
+      } else {
+        redirect("/onboarding");
+      }
+    } else {
+      redirect("/onboarding");
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
