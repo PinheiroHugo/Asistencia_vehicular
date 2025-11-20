@@ -1,13 +1,80 @@
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { DollarSign, Users, Calendar, Star } from "lucide-react";
+import { db } from "@/db";
+import { appointments, users, workshops } from "@/db/schema";
+import { stackServerApp } from "@/stack";
+import { eq, and, gte, lte, desc } from "drizzle-orm";
+import { startOfDay, endOfDay, subDays, format, isSameDay } from "date-fns";
+import { es } from "date-fns/locale";
+import { redirect } from "next/navigation";
 
-export default function WorkshopDashboard() {
+export default async function WorkshopDashboard() {
+  const user = await stackServerApp.getUser();
+
+  if (!user) {
+    redirect("/sign-in");
+  }
+
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.clerkId, user.id),
+    with: {
+      workshops: true,
+    },
+  });
+
+  if (!dbUser || !dbUser.workshops || dbUser.workshops.length === 0) {
+    return <div>No tienes un taller registrado.</div>;
+  }
+
+  const workshop = dbUser.workshops[0];
+
+  // Fetch all appointments for this workshop
+  const allAppointments = await db.query.appointments.findMany({
+    where: eq(appointments.workshopId, workshop.id),
+    with: {
+      service: true,
+      user: true,
+      vehicle: true,
+    },
+    orderBy: [desc(appointments.date)],
+  });
+
+  // Calculate Stats
+  const completedAppointments = allAppointments.filter(a => a.status === 'completed');
+  const totalRevenue = completedAppointments.reduce((acc, curr) => acc + Number(curr.service.price), 0);
+
+  const today = new Date();
+  const appointmentsToday = allAppointments.filter(a => 
+    isSameDay(new Date(a.date), today)
+  );
+  const pendingToday = appointmentsToday.filter(a => a.status === 'pending').length;
+
+  const uniqueClients = new Set(allAppointments.map(a => a.userId)).size;
+
+  // Calculate Chart Data (Last 7 days)
+  const chartData = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = subDays(today, i);
+    const dayName = format(date, 'EEE', { locale: es });
+    
+    const dayRevenue = completedAppointments
+      .filter(a => isSameDay(new Date(a.date), date))
+      .reduce((acc, curr) => acc + Number(curr.service.price), 0);
+
+    chartData.push({
+      name: dayName.charAt(0).toUpperCase() + dayName.slice(1),
+      total: dayRevenue
+    });
+  }
+
+  // Recent Activity (Limit to 5)
+  const recentActivity = allAppointments.slice(0, 5);
+
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Panel de Control</h1>
+      <h1 className="text-3xl font-bold">Panel de Control: {workshop.name}</h1>
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -17,8 +84,8 @@ export default function WorkshopDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Bs. 45,231.89</div>
-            <p className="text-xs text-muted-foreground">+20.1% mes pasado</p>
+            <div className="text-2xl font-bold">Bs. {totalRevenue.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Histórico total</p>
           </CardContent>
         </Card>
         <Card>
@@ -27,8 +94,8 @@ export default function WorkshopDashboard() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+12</div>
-            <p className="text-xs text-muted-foreground">4 pendientes de confirmar</p>
+            <div className="text-2xl font-bold">{appointmentsToday.length}</div>
+            <p className="text-xs text-muted-foreground">{pendingToday} pendientes de confirmar</p>
           </CardContent>
         </Card>
         <Card>
@@ -37,8 +104,8 @@ export default function WorkshopDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+573</div>
-            <p className="text-xs text-muted-foreground">+201 nuevos clientes</p>
+            <div className="text-2xl font-bold">{uniqueClients}</div>
+            <p className="text-xs text-muted-foreground">Total clientes únicos</p>
           </CardContent>
         </Card>
         <Card>
@@ -47,8 +114,8 @@ export default function WorkshopDashboard() {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.8</div>
-            <p className="text-xs text-muted-foreground">Basado en 124 reseñas</p>
+            <div className="text-2xl font-bold">{Number(workshop.rating).toFixed(1)}</div>
+            <p className="text-xs text-muted-foreground">Basado en {workshop.reviewCount} reseñas</p>
           </CardContent>
         </Card>
       </div>
@@ -60,7 +127,7 @@ export default function WorkshopDashboard() {
             <CardTitle>Ingresos Semanales</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
-            <RevenueChart />
+            <RevenueChart data={chartData} />
           </CardContent>
         </Card>
 
@@ -79,38 +146,26 @@ export default function WorkshopDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Juan Pérez</div>
-                    <div className="text-xs text-muted-foreground">Toyota Hilux</div>
-                  </TableCell>
-                  <TableCell>Cambio de Aceite</TableCell>
-                  <TableCell className="text-right">Bs. 250</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <div className="font-medium">María López</div>
-                    <div className="text-xs text-muted-foreground">Suzuki Swift</div>
-                  </TableCell>
-                  <TableCell>Afinado</TableCell>
-                  <TableCell className="text-right">Bs. 450</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Carlos Ruiz</div>
-                    <div className="text-xs text-muted-foreground">Nissan Patrol</div>
-                  </TableCell>
-                  <TableCell>Frenos</TableCell>
-                  <TableCell className="text-right">Bs. 180</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Ana Silva</div>
-                    <div className="text-xs text-muted-foreground">Kia Sportage</div>
-                  </TableCell>
-                  <TableCell>Diagnóstico</TableCell>
-                  <TableCell className="text-right">Bs. 150</TableCell>
-                </TableRow>
+                {recentActivity.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                      No hay actividad reciente
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  recentActivity.map((appointment) => (
+                    <TableRow key={appointment.id}>
+                      <TableCell>
+                        <div className="font-medium">{appointment.user.fullName || "Usuario"}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {appointment.vehicle.make} {appointment.vehicle.model}
+                        </div>
+                      </TableCell>
+                      <TableCell>{appointment.service.name}</TableCell>
+                      <TableCell className="text-right">Bs. {appointment.service.price}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>

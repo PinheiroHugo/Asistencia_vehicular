@@ -2,17 +2,11 @@
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
-const data = [
-  { name: "Lun", total: 1500 },
-  { name: "Mar", total: 2300 },
-  { name: "Mie", total: 1800 },
-  { name: "Jue", total: 2800 },
-  { name: "Vie", total: 3500 },
-  { name: "Sab", total: 4200 },
-  { name: "Dom", total: 1200 },
-];
+interface RevenueChartProps {
+  data: { name: string; total: number }[];
+}
 
-export function RevenueChart() {
+export function RevenueChart({ data }: RevenueChartProps) {
   return (
     <ResponsiveContainer width="100%" height={350}>
       <BarChart data={data}>
