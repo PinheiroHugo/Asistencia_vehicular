@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { updateWorkshopSettings } from "@/app/actions/workshop";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,12 @@ interface WorkshopSettingsFormProps {
 
 export function WorkshopSettingsForm({ initialData }: WorkshopSettingsFormProps) {
   const [isPending, startTransition] = useTransition();
+  const [coordinates, setCoordinates] = useState<{ lat: string; lng: string } | null>(
+    initialData?.latitude && initialData?.longitude 
+      ? { lat: initialData.latitude, lng: initialData.longitude } 
+      : null
+  );
+  const [isLocating, setIsLocating] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -35,8 +41,35 @@ export function WorkshopSettingsForm({ initialData }: WorkshopSettingsFormProps)
     });
   }
 
+  function handleGeolocation() {
+    if (!navigator.geolocation) {
+      toast.error("Tu navegador no soporta geolocalización");
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCoordinates({
+          lat: position.coords.latitude.toString(),
+          lng: position.coords.longitude.toString(),
+        });
+        setIsLocating(false);
+        toast.success("Ubicación actualizada");
+      },
+      (error) => {
+        console.error(error);
+        setIsLocating(false);
+        toast.error("No se pudo obtener tu ubicación. Verifica los permisos.");
+      }
+    );
+  }
+
   return (
     <form action={handleSubmit} className="space-y-4">
+      <input type="hidden" name="latitude" value={coordinates?.lat || "0"} />
+      <input type="hidden" name="longitude" value={coordinates?.lng || "0"} />
+      
       <div className="grid gap-2">
         <Label htmlFor="name">Nombre del Taller</Label>
         <Input 
@@ -79,12 +112,19 @@ export function WorkshopSettingsForm({ initialData }: WorkshopSettingsFormProps)
             placeholder="Av. Banzer 4to Anillo..." 
             required 
           />
-          <Button type="button" variant="outline" size="icon" title="Usar mi ubicación actual">
-            <MapPin className="h-4 w-4" />
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="icon" 
+            title="Usar mi ubicación actual"
+            onClick={handleGeolocation}
+            disabled={isLocating}
+          >
+            <MapPin className={`h-4 w-4 ${isLocating ? 'animate-pulse text-primary' : ''}`} />
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Coordenadas actuales: {initialData?.latitude ?? "N/A"}, {initialData?.longitude ?? "N/A"}
+          Coordenadas: {coordinates ? `${coordinates.lat}, ${coordinates.lng}` : "No definidas"}
         </p>
       </div>
 

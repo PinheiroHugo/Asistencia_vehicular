@@ -19,6 +19,8 @@ export async function updateWorkshopSettings(formData: FormData) {
   const description = formData.get("description") as string;
   const phone = formData.get("phone") as string;
   const address = formData.get("address") as string;
+  const latitude = formData.get("latitude") as string;
+  const longitude = formData.get("longitude") as string;
 
   // Check if workshop exists for this owner
   const existingWorkshop = await db.query.workshops.findFirst({
@@ -27,18 +29,26 @@ export async function updateWorkshopSettings(formData: FormData) {
 
   if (existingWorkshop) {
     await db.update(workshops)
-      .set({ name, description, phone, address, updatedAt: new Date() })
+      .set({ 
+        name, 
+        description, 
+        phone, 
+        address, 
+        latitude: latitude || existingWorkshop.latitude,
+        longitude: longitude || existingWorkshop.longitude,
+        updatedAt: new Date() 
+      })
       .where(eq(workshops.id, existingWorkshop.id));
   } else {
-    // Create new workshop (basic implementation, lat/long should be handled better)
+    // Create new workshop
     await db.insert(workshops).values({
       ownerId: dbUser.id,
       name,
       description,
       phone,
       address,
-      latitude: "0", // Placeholder
-      longitude: "0", // Placeholder
+      latitude: latitude || "0",
+      longitude: longitude || "0",
     });
   }
 
