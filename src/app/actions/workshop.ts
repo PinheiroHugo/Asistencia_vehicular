@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from "@/db";
-import { assistanceRequests, users, workshops } from "@/db/schema";
+import { assistanceRequests, users, workshops, services } from "@/db/schema";
 import { stackServerApp } from "@/stack";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -119,4 +119,76 @@ export async function getWorkshopStats() {
     rating: Number(workshop.rating),
     monthlyRevenue
   };
+}
+
+export async function addService(formData: FormData) {
+  const user = await stackServerApp.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.clerkId, user.id),
+  });
+  if (!dbUser) throw new Error("User not found");
+
+  const workshop = await db.query.workshops.findFirst({
+    where: eq(workshops.ownerId, dbUser.id),
+  });
+  if (!workshop) throw new Error("Workshop not found");
+
+  const name = formData.get("name") as string;
+  const description = formData.get("description") as string;
+  const price = formData.get("price") as string;
+  const durationMinutes = formData.get("durationMinutes") as string;
+  const type = formData.get("type") as any;
+
+  await db.insert(services).values({
+    workshopId: workshop.id,
+    name,
+    description,
+    price: price,
+    durationMinutes: durationMinutes ? parseInt(durationMinutes) : 60,
+    type,
+  });
+
+  revalidatePath("/dashboard/workshop/services");
+}
+
+export async function deleteService(serviceId: number) {
+  const user = await stackServerApp.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  // Verify ownership logic here
+  
+  await db.delete(services).where(eq(services.id, serviceId));
+  revalidatePath("/dashboard/workshop/services");
+}
+
+export async function updateWorkshopSettings(formData: FormData) {
+  const user = await stackServerApp.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.clerkId, user.id),
+  });
+  if (!dbUser) throw new Error("User not found");
+
+  const name = formData.get("name") as string;
+  const description = formData.get("description") as string;
+  const phone = formData.get("phone") as string;
+  const address = formData.get("address") as string;
+  const latitude = formData.get("latitude") as string;
+  const longitude = formData.get("longitude") as string;
+
+  await db.update(workshops)
+    .set({
+      name,
+      description,
+      phone,
+      address,
+      latitude: latitude,
+      longitude: longitude,
+    })
+    .where(eq(workshops.ownerId, dbUser.id));
+
+  revalidatePath("/dashboard/workshop/settings");
 }

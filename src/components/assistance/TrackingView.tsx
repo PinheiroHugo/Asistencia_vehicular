@@ -81,8 +81,8 @@ export function TrackingView({
             </div>
           </div>
           <div>
-            <h3 className="text-xl font-bold">Buscando taller cercano...</h3>
-            <p className="text-muted-foreground">Estamos notificando a los mecánicos en tu zona.</p>
+            <h3 className="text-xl font-bold">Solicitud Enviada</h3>
+            <p className="text-muted-foreground">Tu solicitud está visible para los talleres cercanos. Esperando que un mecánico acepte el trabajo.</p>
           </div>
           <Button variant="outline" className="mt-4 text-destructive">Cancelar Solicitud</Button>
         </CardContent>
