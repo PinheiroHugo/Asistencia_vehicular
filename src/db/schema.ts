@@ -47,6 +47,7 @@ export const workshops = pgTable("workshops", {
   imageUrl: text("image_url"),
   rating: decimal("rating", { precision: 3, scale: 2 }).default("0.00"),
   reviewCount: integer("review_count").default(0),
+  tags: text("tags").array(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

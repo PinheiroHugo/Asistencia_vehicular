@@ -41,8 +41,8 @@ export default function OnboardingPage() {
         {/* Workshop Option */}
         <form action={completeOnboarding} className="h-full">
           <input type="hidden" name="role" value="workshop_owner" />
-          <button type="submit" className="w-full h-full text-left">
-            <Card className="h-full cursor-pointer transition-all hover:border-accent hover:shadow-lg">
+          <button type="submit" className="w-full h-full text-left group">
+            <Card className="h-full cursor-pointer transition-all hover:border-accent hover:shadow-lg group-focus-within:border-accent group-focus-within:shadow-lg">
               <CardHeader>
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
                   <Wrench className="h-6 w-6 text-accent" />
@@ -52,13 +52,28 @@ export default function OnboardingPage() {
                   Quiero ofrecer mis servicios, gestionar citas y conseguir más clientes.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <ul className="list-disc pl-4 text-sm text-muted-foreground space-y-2">
                   <li>Recibe solicitudes de auxilio cercanas</li>
                   <li>Gestiona tu agenda de citas online</li>
                   <li>Promociona tus servicios y ofertas</li>
-                  <li>Accede a estadísticas de tu negocio</li>
                 </ul>
+                
+                <div className="pt-4 border-t" onClick={(e) => e.stopPropagation()}>
+                  <label htmlFor="description" className="block text-sm font-medium mb-2">
+                    ¿Qué servicios ofreces?
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    placeholder="Ej: Hago cambio de aceite, arreglo frenos y tengo servicio de gomería..."
+                    className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    La IA clasificará tu taller automáticamente basado en esto.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </button>
