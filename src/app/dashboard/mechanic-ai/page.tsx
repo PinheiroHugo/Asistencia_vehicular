@@ -7,12 +7,7 @@ import { eq } from "drizzle-orm";
 export default async function MechanicAIPage() {
   const user = await stackServerApp.getUser();
   
-  // Fetch user's vehicles
-  const userVehicles = user ? await db.query.vehicles.findMany({
-    where: (vehicles, { eq }) => eq(vehicles.userId, db.query.users.findFirst({
-      where: eq(users.stackId, user.id),
-    }).then(u => u?.id ?? 0) as any), // This is a bit complex due to async subquery not being directly supported in where like this usually
-  }) : [];
+
 
   // Better approach: get user first then vehicles
   let vehicleContext = "No se encontraron vehículos registrados.";
