@@ -28,6 +28,7 @@ export function DashboardSidebar({ role }: SidebarProps) {
 
   const workshopLinks = [
     { href: "/dashboard/workshop", label: "Resumen", icon: BarChart3 },
+    { href: "/dashboard/workshop/tickets", label: "Tickets", icon: Car },
     { href: "/dashboard/workshop/calendar", label: "Calendario", icon: Calendar },
     { href: "/dashboard/workshop/services", label: "Servicios", icon: Wrench },
     { href: "/dashboard/workshop/settings", label: "Configuración", icon: Settings },
