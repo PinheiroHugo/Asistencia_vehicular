@@ -49,8 +49,12 @@ export function Hero() {
              {/* Placeholder for a nice 3D car image or illustration */}
             <div className="relative h-[400px] w-[400px] sm:h-[500px] sm:w-[500px] rounded-full bg-gradient-to-tr from-primary/20 to-accent/20 blur-3xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
             <div className="relative rounded-xl border bg-card p-2 shadow-2xl ring-1 ring-border">
-                <div className="aspect-video overflow-hidden rounded-lg bg-muted flex items-center justify-center">
-                    <span className="text-muted-foreground">Imagen Hero (Auto Moderno)</span>
+                <div className="aspect-video overflow-hidden rounded-lg bg-muted flex items-center justify-center relative">
+                    <img 
+                      src="https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?q=80&w=1600&auto=format&fit=crop" 
+                      alt="Hugo Automotriz Luxury SUV" 
+                      className="object-cover w-full h-full"
+                    />
                 </div>
             </div>
           </div>

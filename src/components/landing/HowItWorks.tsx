@@ -59,8 +59,27 @@ export function HowItWorks() {
                 <div className="h-[46px] w-[3px] bg-gray-800 absolute -left-[17px] top-[124px] rounded-l-lg"></div>
                 <div className="h-[46px] w-[3px] bg-gray-800 absolute -left-[17px] top-[178px] rounded-l-lg"></div>
                 <div className="h-[64px] w-[3px] bg-gray-800 absolute -right-[17px] top-[142px] rounded-r-lg"></div>
-                <div className="rounded-[2rem] overflow-hidden w-[272px] h-[572px] bg-white dark:bg-gray-800 flex items-center justify-center">
-                    <span className="text-gray-500">App Screenshot</span>
+                <div className="rounded-[2rem] overflow-hidden w-[272px] h-[572px] bg-white dark:bg-gray-800 flex items-center justify-center relative">
+                    <img 
+                      src="https://images.unsplash.com/photo-1569383746724-6f1b882b8f46?q=80&w=800&auto=format&fit=crop" 
+                      alt="Hugo App Interface" 
+                      className="object-cover w-full h-full"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
+                      <div className="bg-card/90 backdrop-blur-sm p-3 rounded-lg border border-white/10 shadow-lg">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">JP</div>
+                          <div>
+                            <p className="font-bold text-sm text-foreground">Juan Pérez</p>
+                            <p className="text-xs text-muted-foreground">Grúa en camino</p>
+                          </div>
+                          <span className="ml-auto text-xs font-bold text-green-500">5 min</span>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full w-3/4 bg-primary rounded-full" />
+                        </div>
+                      </div>
+                    </div>
                 </div>
             </div>
           </div>
