@@ -4,42 +4,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Star, Phone, Clock, ShieldCheck } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
-
-// Mock data fetcher
-async function getWorkshop(id: string) {
-  // Simulate DB delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  
-  return {
-    id,
-    name: "Taller Mecánico 'El Rápido'",
-    image: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=1000&auto=format&fit=crop",
-    rating: 4.8,
-    reviews: 124,
-    address: "Av. Banzer 4to Anillo, Santa Cruz",
-    phone: "+591 70012345",
-    description: "Especialistas en mecánica general y mantenimiento preventivo. Contamos con equipos de última generación y personal certificado.",
-    services: [
-      { id: "1", name: "Cambio de Aceite", price: 250 },
-      { id: "2", name: "Afinado de Motor", price: 450 },
-      { id: "3", name: "Diagnóstico Computarizado", price: 150 },
-      { id: "4", name: "Revisión de Frenos", price: 180 },
-    ],
-    schedule: "Lunes a Sábado: 8:00 - 18:00",
-  };
-}
+import { getWorkshopById } from "@/app/actions/workshop";
+import { notFound } from "next/navigation";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
 
 export default async function WorkshopProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const workshop = await getWorkshop(id);
+  const workshop = await getWorkshopById(parseInt(id));
+
+  if (!workshop) {
+    notFound();
+  }
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-8">
       {/* Header */}
       <div className="relative h-[300px] w-full rounded-xl overflow-hidden">
         <Image
-          src={workshop.image}
+          src={workshop.imageUrl || "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=1000&auto=format&fit=crop"}
           alt={workshop.name}
           fill
           className="object-cover"
@@ -55,7 +38,7 @@ export default async function WorkshopProfilePage({ params }: { params: Promise<
             </div>
             <div className="flex items-center gap-1 text-yellow-400">
               <Star className="h-4 w-4 fill-yellow-400" />
-              {workshop.rating} ({workshop.reviews} reseñas)
+              {Number(workshop.rating).toFixed(1)} ({workshop.reviewCount} reseñas)
             </div>
           </div>
         </div>
@@ -67,7 +50,7 @@ export default async function WorkshopProfilePage({ params }: { params: Promise<
           <section>
             <h2 className="text-2xl font-bold mb-4">Sobre Nosotros</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {workshop.description}
+              {workshop.description || "Sin descripción disponible."}
             </p>
           </section>
 
@@ -88,27 +71,36 @@ export default async function WorkshopProfilePage({ params }: { params: Promise<
           <section>
             <h2 className="text-2xl font-bold mb-4">Reseñas</h2>
             <div className="space-y-4">
-              {[1, 2].map((i) => (
-                <Card key={i}>
-                  <CardHeader className="flex flex-row items-center gap-4 p-4 pb-2">
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-bold">
-                      JP
-                    </div>
-                    <div>
-                      <div className="font-bold">Juan Pérez</div>
-                      <div className="text-xs text-muted-foreground">Hace 2 días</div>
-                    </div>
-                    <div className="ml-auto flex text-yellow-500">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="h-3 w-3 fill-current" />
-                      ))}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-2 text-sm text-muted-foreground">
-                    Excelente servicio, muy rápidos y profesionales. Recomendado.
-                  </CardContent>
-                </Card>
-              ))}
+              {workshop.reviews.length === 0 ? (
+                <p className="text-muted-foreground">No hay reseñas todavía.</p>
+              ) : (
+                workshop.reviews.map((review) => (
+                  <Card key={review.id}>
+                    <CardHeader className="flex flex-row items-center gap-4 p-4 pb-2">
+                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-bold">
+                        {review.user.fullName?.[0] || "U"}
+                      </div>
+                      <div>
+                        <div className="font-bold">{review.user.fullName || "Usuario"}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Hace {formatDistanceToNow(review.createdAt, { locale: es })}
+                        </div>
+                      </div>
+                      <div className="ml-auto flex text-yellow-500">
+                        {[...Array(5)].map((_, i) => (
+                          <Star 
+                            key={i} 
+                            className={`h-3 w-3 ${i < review.rating ? "fill-current" : "text-muted-foreground"}`} 
+                          />
+                        ))}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-2 text-sm text-muted-foreground">
+                      {review.comment}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </section>
         </div>
@@ -124,14 +116,14 @@ export default async function WorkshopProfilePage({ params }: { params: Promise<
                 <Clock className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <div className="font-medium">Horario de Atención</div>
-                  <div className="text-sm text-muted-foreground">{workshop.schedule}</div>
+                  <div className="text-sm text-muted-foreground">Lunes a Sábado: 8:00 - 18:00</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <div className="font-medium">Teléfono</div>
-                  <div className="text-sm text-muted-foreground">{workshop.phone}</div>
+                  <div className="text-sm text-muted-foreground">{workshop.phone || "No disponible"}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -142,7 +134,11 @@ export default async function WorkshopProfilePage({ params }: { params: Promise<
               </div>
               
               <div className="pt-4">
-                <BookingModal workshopName={workshop.name} services={workshop.services} />
+                <BookingModal 
+                  workshopId={workshop.id}
+                  workshopName={workshop.name} 
+                  services={workshop.services.map(s => ({ id: s.id, name: s.name, price: Number(s.price) }))} 
+                />
               </div>
             </CardContent>
           </Card>

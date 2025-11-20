@@ -19,12 +19,15 @@ import { es } from "date-fns/locale";
 import { Check, Clock, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { createAppointment } from "@/app/actions/booking";
+
 interface BookingModalProps {
+  workshopId: number;
   workshopName: string;
-  services: { id: string; name: string; price: number }[];
+  services: { id: number; name: string; price: number }[];
 }
 
-export function BookingModal({ workshopName, services }: BookingModalProps) {
+export function BookingModal({ workshopId, workshopName, services }: BookingModalProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [serviceId, setServiceId] = useState<string>("");
   const [timeSlot, setTimeSlot] = useState<string>("");
@@ -36,9 +39,15 @@ export function BookingModal({ workshopName, services }: BookingModalProps) {
   ];
 
   const handleBook = async () => {
-    // Simulate booking
+    if (!date || !timeSlot || !serviceId) return;
+
     toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1500)),
+      createAppointment({
+        workshopId,
+        serviceId: parseInt(serviceId),
+        date,
+        time: timeSlot
+      }),
       {
         loading: "Agendando cita...",
         success: () => {
@@ -51,7 +60,7 @@ export function BookingModal({ workshopName, services }: BookingModalProps) {
     );
   };
 
-  const selectedService = services.find(s => s.id === serviceId);
+  const selectedService = services.find(s => s.id.toString() === serviceId);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -76,7 +85,7 @@ export function BookingModal({ workshopName, services }: BookingModalProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {services.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
+                    <SelectItem key={s.id} value={s.id.toString()}>
                       {s.name} - Bs. {s.price}
                     </SelectItem>
                   ))}

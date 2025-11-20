@@ -9,72 +9,34 @@ import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { startOfDay, endOfDay, subDays, format, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { redirect } from "next/navigation";
+import { getWorkshopStats } from "@/app/actions/workshop";
 
 export default async function WorkshopDashboard() {
+  const stats = await getWorkshopStats();
+
+  if (!stats) {
+    return <div>No tienes un taller registrado o no se pudieron cargar los datos.</div>;
+  }
+
+  // Fetch recent appointments for the table
   const user = await stackServerApp.getUser();
-
-  if (!user) {
-    redirect("/sign-in");
-  }
-
-  const dbUser = await db.query.users.findFirst({
-    where: eq(users.clerkId, user.id),
-    with: {
-      workshops: true,
-    },
-  });
-
-  if (!dbUser || !dbUser.workshops || dbUser.workshops.length === 0) {
-    return <div>No tienes un taller registrado.</div>;
-  }
-
-  const workshop = dbUser.workshops[0];
-
-  // Fetch all appointments for this workshop
-  const allAppointments = await db.query.appointments.findMany({
-    where: eq(appointments.workshopId, workshop.id),
+  const dbUser = await db.query.users.findFirst({ where: eq(users.clerkId, user!.id) });
+  const workshop = await db.query.workshops.findFirst({ where: eq(workshops.ownerId, dbUser!.id) });
+  
+  const recentActivity = await db.query.appointments.findMany({
+    where: eq(appointments.workshopId, workshop!.id),
     with: {
       service: true,
       user: true,
       vehicle: true,
     },
     orderBy: [desc(appointments.date)],
+    limit: 5
   });
-
-  // Calculate Stats
-  const completedAppointments = allAppointments.filter(a => a.status === 'completed');
-  const totalRevenue = completedAppointments.reduce((acc, curr) => acc + Number(curr.service.price), 0);
-
-  const today = new Date();
-  const appointmentsToday = allAppointments.filter(a => 
-    isSameDay(new Date(a.date), today)
-  );
-  const pendingToday = appointmentsToday.filter(a => a.status === 'pending').length;
-
-  const uniqueClients = new Set(allAppointments.map(a => a.userId)).size;
-
-  // Calculate Chart Data (Last 7 days)
-  const chartData = [];
-  for (let i = 6; i >= 0; i--) {
-    const date = subDays(today, i);
-    const dayName = format(date, 'EEE', { locale: es });
-    
-    const dayRevenue = completedAppointments
-      .filter(a => isSameDay(new Date(a.date), date))
-      .reduce((acc, curr) => acc + Number(curr.service.price), 0);
-
-    chartData.push({
-      name: dayName.charAt(0).toUpperCase() + dayName.slice(1),
-      total: dayRevenue
-    });
-  }
-
-  // Recent Activity (Limit to 5)
-  const recentActivity = allAppointments.slice(0, 5);
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Panel de Control: {workshop.name}</h1>
+      <h1 className="text-3xl font-bold">Panel de Control</h1>
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -84,28 +46,18 @@ export default async function WorkshopDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Bs. {totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">Bs. {stats.revenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">Histórico total</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Citas Hoy</CardTitle>
+            <CardTitle className="text-sm font-medium">Citas Completadas</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{appointmentsToday.length}</div>
-            <p className="text-xs text-muted-foreground">{pendingToday} pendientes de confirmar</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes Activos</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{uniqueClients}</div>
-            <p className="text-xs text-muted-foreground">Total clientes únicos</p>
+            <div className="text-2xl font-bold">{stats.appointments}</div>
+            <p className="text-xs text-muted-foreground">Total histórico</p>
           </CardContent>
         </Card>
         <Card>
@@ -114,8 +66,8 @@ export default async function WorkshopDashboard() {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Number(workshop.rating).toFixed(1)}</div>
-            <p className="text-xs text-muted-foreground">Basado en {workshop.reviewCount} reseñas</p>
+            <div className="text-2xl font-bold">{stats.rating.toFixed(1)}</div>
+            <p className="text-xs text-muted-foreground">Promedio general</p>
           </CardContent>
         </Card>
       </div>
@@ -124,10 +76,10 @@ export default async function WorkshopDashboard() {
         {/* Chart */}
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Ingresos Semanales</CardTitle>
+            <CardTitle>Ingresos Mensuales (Estimado)</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
-            <RevenueChart data={chartData} />
+            <RevenueChart data={stats.monthlyRevenue} />
           </CardContent>
         </Card>
 

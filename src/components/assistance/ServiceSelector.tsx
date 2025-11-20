@@ -14,7 +14,7 @@ interface ServiceSelectorProps {
 const services: { id: ServiceType; label: string; icon: any }[] = [
   { id: "tow", label: "Grúa", icon: Truck },
   { id: "battery", label: "Batería", icon: Battery },
-  { id: "tire", label: "Llanta Baja", icon: Car }, // Using Car as placeholder for Tire
+  { id: "tire", label: "Llanta Baja", icon: Car },
   { id: "fuel", label: "Gasolina", icon: Fuel },
   { id: "mechanic", label: "Mecánico", icon: Wrench },
 ];

@@ -1,64 +1,13 @@
-"use client";
-
-import { useState } from "react";
 import { WorkshopCard } from "@/components/workshops/WorkshopCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Filter } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getWorkshops } from "@/app/actions/workshop";
 
-// Dummy data
-const WORKSHOPS = [
-  {
-    id: "1",
-    name: "Taller Mecánico 'El Rápido'",
-    image: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=1000&auto=format&fit=crop",
-    rating: 4.8,
-    reviews: 124,
-    address: "Av. Banzer 4to Anillo, Santa Cruz",
-    isOpen: true,
-    services: ["Mecánica General", "Cambio de Aceite", "Frenos"],
-  },
-  {
-    id: "2",
-    name: "AutoService Bolivia",
-    image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=1000&auto=format&fit=crop",
-    rating: 4.5,
-    reviews: 89,
-    address: "Calle 21 de Calacoto, La Paz",
-    isOpen: true,
-    services: ["Electricidad", "Baterías", "Diagnóstico"],
-  },
-  {
-    id: "3",
-    name: "Frenos y Embragues 'Don Pepe'",
-    image: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=1000&auto=format&fit=crop",
-    rating: 4.2,
-    reviews: 45,
-    address: "Av. Blanco Galindo km 5, Cochabamba",
-    isOpen: false,
-    services: ["Frenos", "Embragues", "Suspensión"],
-  },
-  {
-    id: "4",
-    name: "Taller Premium Motors",
-    image: "https://images.unsplash.com/photo-1503376763036-066120622c74?q=80&w=1000&auto=format&fit=crop",
-    rating: 4.9,
-    reviews: 210,
-    address: "Equipetrol Norte, Santa Cruz",
-    isOpen: true,
-    services: ["Mecánica General", "Importados", "Detailing"],
-  },
-];
-
-export default function WorkshopsPage() {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
-
-  const filteredWorkshops = WORKSHOPS.filter((w) => 
-    w.name.toLowerCase().includes(search.toLowerCase()) || 
-    w.address.toLowerCase().includes(search.toLowerCase())
-  );
+export default async function WorkshopsPage({ searchParams }: { searchParams: { filter?: string } }) {
+  const filter = searchParams.filter || "all";
+  const workshops = await getWorkshops(filter);
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-8">
@@ -73,27 +22,30 @@ export default function WorkshopsPage() {
             <Input 
               placeholder="Buscar taller..." 
               className="pl-8" 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              // Note: Client-side search would require a client component wrapper or URL state
             />
           </div>
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[140px]">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Filtrar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="open">Abiertos</SelectItem>
-              <SelectItem value="rating">Mejor Valorados</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Filter implementation would need client component or Link updates */}
+          <Button variant="outline">
+            <Filter className="h-4 w-4 mr-2" />
+            Filtrar
+          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredWorkshops.map((workshop) => (
-          <WorkshopCard key={workshop.id} {...workshop} />
+        {workshops.map((workshop) => (
+          <WorkshopCard 
+            key={workshop.id} 
+            id={workshop.id.toString()}
+            name={workshop.name}
+            image={workshop.imageUrl || "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=1000&auto=format&fit=crop"}
+            rating={Number(workshop.rating)}
+            reviews={workshop.reviewCount || 0}
+            address={workshop.address}
+            isOpen={true} // Logic for open/close can be added
+            services={workshop.services.map(s => s.name)}
+          />
         ))}
       </div>
     </div>
