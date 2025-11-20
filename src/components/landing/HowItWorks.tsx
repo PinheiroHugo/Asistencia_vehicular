@@ -62,7 +62,7 @@ export function HowItWorks() {
                 <div className="rounded-[2rem] overflow-hidden w-[272px] h-[572px] bg-white dark:bg-gray-800 flex items-center justify-center relative">
                     <img 
                       src="https://images.unsplash.com/photo-1569383746724-6f1b882b8f46?q=80&w=800&auto=format&fit=crop" 
-                      alt="Hugo App Interface" 
+                      alt="Asistencia Vehicular AI" 
                       className="object-cover w-full h-full"
                     />
                     <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent text-white">

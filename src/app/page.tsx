@@ -68,7 +68,7 @@ export default function Home() {
             </div>
           </div>
           <div className="mt-10 pt-6 border-t text-center text-sm text-muted-foreground">
-            © 2025 Hugo Automotriz Bolivia. Todos los derechos reservados.
+            © 2025 Asistencia Vehicular AI Bolivia. Todos los derechos reservados.
           </div>
         </div>
       </footer>

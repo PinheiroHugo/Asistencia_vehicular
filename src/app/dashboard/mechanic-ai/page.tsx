@@ -59,7 +59,7 @@ export default async function MechanicAIPage() {
           <div className="bg-yellow-50 dark:bg-yellow-950/30 p-4 rounded-lg border border-yellow-100 dark:border-yellow-900">
             <h3 className="font-bold text-yellow-800 dark:text-yellow-300 mb-2">⚠️ Advertencia</h3>
             <p className="text-sm text-yellow-700 dark:text-yellow-400">
-              Hugo es una IA y puede cometer errores. Para diagnósticos críticos, siempre visita un taller certificado.
+              Hugo es una IA de Asistencia Vehicular y puede cometer errores. Para diagnósticos críticos, siempre visita un taller certificado.
             </p>
           </div>
         </div>
