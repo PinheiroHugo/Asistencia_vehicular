@@ -21,7 +21,69 @@ export default {
 		}
 
 		try {
-			const { messages, vehicleContext } = await request.json() as any;
+			const body = await request.json() as any;
+            
+            // Handle Maintenance Analysis
+            if (body.action === 'maintenance') {
+                const { vehicleDetails, serviceHistory } = body;
+                const ai = new Ai(env.AI);
+
+                const systemPrompt = `Eres un experto mecánico automotriz de Hugo Automotriz.
+                Tu tarea es analizar el estado de un vehículo y su historial de servicios para sugerir mantenimiento preventivo.
+                
+                Contexto:
+                - Vehículo: ${vehicleDetails}
+                - Historial de Servicios Recientes: ${serviceHistory || "No hay historial disponible."}
+                - Ubicación: Bolivia (considera altura, caminos difíciles).
+                
+                Instrucciones:
+                1. Analiza el vehículo y el historial.
+                2. Genera una lista de servicios recomendados.
+                3. Asigna urgencia (low, medium, high) y costo estimado en Bolivianos (Bs).
+                4. Genera un resumen corto.
+                
+                IMPORTANTE: Tu respuesta DEBE ser SOLAMENTE un objeto JSON válido con la siguiente estructura, sin texto adicional ni bloques de código markdown:
+                {
+                  "summary": "Resumen del análisis...",
+                  "services": [
+                    {
+                      "service": "Nombre del servicio",
+                      "urgency": "high",
+                      "reason": "Razón técnica...",
+                      "estimatedCost": "Bs. 500"
+                    }
+                  ]
+                }`;
+
+                const response = await ai.run('@cf/meta/llama-3-8b-instruct', {
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: "Genera el reporte de mantenimiento." }
+                    ],
+                    stream: false, // We want the full JSON
+                });
+
+                // Llama 3 might wrap in markdown code block, try to clean it
+                let jsonStr = (response as any).response;
+                jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
+
+                try {
+                    // Validate JSON
+                    JSON.parse(jsonStr);
+                    return new Response(jsonStr, {
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    });
+                } catch (e) {
+                    console.error("Invalid JSON from AI:", jsonStr);
+                    return new Response(JSON.stringify({ error: "AI generated invalid JSON", raw: jsonStr }), {
+                        status: 500,
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    });
+                }
+            }
+
+            // Default Chat Handler (Existing)
+			const { messages, vehicleContext } = body;
 			const ai = new Ai(env.AI);
 
 			const contextPrompt = vehicleContext 
@@ -55,10 +117,6 @@ export default {
 			
 			Responde de manera concisa y útil. Usa formato Markdown.`;
 
-			// Convert messages to the format expected by Cloudflare AI
-			// Note: Some models expect specific prompting, but Llama 3 instruct handles chat format well.
-			// We need to ensure the system prompt is included.
-			
 			const chatMessages = [
 				{ role: 'system', content: systemPrompt },
 				...messages.map((m: any) => ({

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <metadata>
+    <title>Critical Bug Fixes: AI Assistant &amp; Request Cancellation</title>
+    <phase>Bug Fixing</phase>
+    <difficulty>high</difficulty>
+    <estimated_time>2-3 hours</estimated_time>
+    <version>1.0</version>
+    <last_updated>2025-11-25</last_updated>
+    <prerequisites>
+      <prerequisite>Access to Vercel logs (optional but helpful)</prerequisite>
+      <prerequisite>Local environment setup</prerequisite>
+    </prerequisites>
+  </metadata>
+
+  <thinking_configuration>
+    <claude_extended_thinking>
+      <enabled>true</enabled>
+      <reasoning>
+        The client-side exception in the AI assistant could be complex, involving hydration errors, unhandled nulls, or API failures. The cancellation button failure requires tracing the event handler and API call.
+      </reasoning>
+      <budget_tokens>15000</budget_tokens>
+      <expected_thinking_depth>
+        Deep dive into the error stack trace (if reproducible locally) or code analysis of the AI component. Trace the cancellation flow from UI to backend.
+      </expected_thinking_depth>
+    </claude_extended_thinking>
+  </thinking_configuration>
+
+  <context>
+    <project_info>
+      <name>Hugo Automotriz</name>
+      <current_location>.</current_location>
+      <framework>Next.js</framework>
+      <status>In Development</status>
+    </project_info>
+    <objective>
+      <primary>
+        Resolve critical stability issues: a client-side exception in the AI assistance feature and a non-functional "Cancel Request" button.
+      </primary>
+      <success_criteria>
+        <criterion>✅ AI Assistance page loads and functions without client-side exceptions.</criterion>
+        <criterion>✅ "Cancel Request" button successfully cancels the service request.</criterion>
+      </success_criteria>
+    </objective>
+  </context>
+
+  <instructions>
+    <step number="1">
+      <title>Debug AI Assistance Exception</title>
+      <thinking_guidance>
+        Reproduce the error on `asistencia-vehicular-ai.vercel.app` (or locally).
+        1.  Check the browser console for the specific error message.
+        2.  Inspect the component code (likely `src/app/ai-assistance/page.tsx` or similar).
+        3.  Look for common causes: accessing properties of undefined, hydration mismatches, or unhandled async errors.
+      </thinking_guidance>
+      <action>
+        Fix the client-side exception. Add error boundaries or null checks where appropriate. Ensure data fetching is robust.
+      </action>
+      <validation>
+        <thinking_quality>
+          Verify if the fix addresses the root cause or just suppresses the error.
+        </thinking_quality>
+        <execution_success>
+          ✅ Page loads without crashing.
+          ✅ Console is free of "Application error" messages.
+        </execution_success>
+      </validation>
+    </step>
+
+    <step number="2">
+      <title>Fix Cancel Request Button</title>
+      <thinking_guidance>
+        Locate the "Cancel" button component (likely in `src/app/dashboard/request/page.tsx` or a modal).
+        1.  Check the `onClick` handler.
+        2.  Verify the API endpoint it calls (e.g., `/api/requests/[id]/cancel`).
+        3.  Check if the backend correctly handles the cancellation logic.
+        4.  Ensure the UI updates after cancellation.
+      </thinking_guidance>
+      <action>
+        Repair the cancellation functionality. Ensure the API call is correct and the state updates to reflect the "Cancelled" status.
+      </action>
+      <validation>
+        <execution_success>
+          ✅ Clicking "Cancel" updates the request status.
+          ✅ No console errors during the action.
+        </execution_success>
+      </validation>
+    </step>
+  </instructions>
+
+  <output_format>
+    <structure>
+      <section name="execution_log">
+        Details of the debugging process and fixes applied.
+      </section>
+      <section name="results">
+        Confirmation of bug resolution.
+      </section>
+    </structure>
+    <format>Markdown</format>
+  </output_format>
+</prompt>

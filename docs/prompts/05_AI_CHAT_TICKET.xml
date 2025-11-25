@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <metadata>
+    <title>AI Assistant Chat with Ticket Creation &amp; Persistence</title>
+    <phase>Feature Implementation</phase>
+    <difficulty>high</difficulty>
+    <estimated_time>4-6 hours</estimated_time>
+    <version>3.0</version>
+    <last_updated>2025-11-25</last_updated>
+    <prerequisites>
+      <prerequisite>LLM Provider API Key (OpenAI/Anthropic/Gemini)</prerequisite>
+      <prerequisite>Vercel AI SDK (recommended)</prerequisite>
+      <prerequisite>Shadcn UI components installed</prerequisite>
+      <prerequisite>Vercel Blob Token (BLOB_READ_WRITE_TOKEN)</prerequisite>
+      <prerequisite>Cloudflare Wrangler CLI installed</prerequisite>
+    </prerequisites>
+  </metadata>
+
+  <thinking_configuration>
+    <claude_extended_thinking>
+      <enabled>true</enabled>
+      <reasoning>
+        Complex feature requiring state management (chat history), database design (persistence), AI logic (function calling), and external services (Vercel Blob for images, Cloudflare Workers for AI).
+        **Crucial:** The UI must be high-quality (Shadcn, Dark mode). Image uploads must use Vercel Blob. AI logic should be offloaded to a Cloudflare Worker if possible or configured via Wrangler.
+      </reasoning>
+      <budget_tokens>25000</budget_tokens>
+      <expected_thinking_depth>
+        Design the database schema. Plan the API route.
+        **Infrastructure:** Configure Vercel Blob for image storage. Set up a Cloudflare Worker (using Wrangler) to handle the AI processing or proxying to ensure scalability and edge execution.
+        **UI Design:** Plan the layout using Shadcn components.
+      </expected_thinking_depth>
+    </claude_extended_thinking>
+  </thinking_configuration>
+
+  <context>
+    <project_info>
+      <name>Hugo Automotriz</name>
+      <current_location>.</current_location>
+      <framework>Next.js</framework>
+      <status>In Development</status>
+    </project_info>
+    <objective>
+      <primary>
+        Implement a persistent AI chat interface where users can discuss car issues and upload images. The AI should be able to "finalize" the conversation by creating a formal service ticket.
+        **Infrastructure:** Use Vercel Blob for image uploads. Configure a Cloudflare AI Worker using `wrangler` to handle the AI logic.
+        **Design:** Use Shadcn components and match the "Emergency Assistant" aesthetic.
+      </primary>
+      <success_criteria>
+        <criterion>✅ Chat interface is built with Shadcn UI (Dark mode).</criterion>
+        <criterion>✅ Images are uploaded to Vercel Blob (`BLOB_READ_WRITE_TOKEN`).</criterion>
+        <criterion>✅ AI logic is deployed/configured via Cloudflare Worker (`wrangler`).</criterion>
+        <criterion>✅ Chat history is persisted.</criterion>
+        <criterion>✅ AI can trigger service ticket creation.</criterion>
+      </success_criteria>
+    </objective>
+  </context>
+
+  <instructions>
+    <step number="1">
+      <title>Database Schema for Chat</title>
+      <thinking_guidance>
+        Design the schema. Likely need `ChatSession` (id, userId, createdAt) and `ChatMessage` (id, sessionId, role, content, imageUrl, createdAt).
+      </thinking_guidance>
+      <action>
+        Update `prisma/schema.prisma` to include `ChatSession` and `ChatMessage` models. Add `imageUrl` field to `ChatMessage`. Run migrations.
+      </action>
+    </step>
+
+    <step number="2">
+      <title>Configure Vercel Blob</title>
+      <thinking_guidance>
+        Ensure `@vercel/blob` is installed.
+        1.  Check for `BLOB_READ_WRITE_TOKEN` in `.env.local`.
+        2.  Create an API route (or Server Action) to handle image uploads to Vercel Blob.
+      </thinking_guidance>
+      <action>
+        Install `@vercel/blob`. Implement the image upload logic.
+      </action>
+    </step>
+
+    <step number="3">
+      <title>Setup Cloudflare AI Worker</title>
+      <thinking_guidance>
+        Use `wrangler` to init a new worker (e.g., `ai-worker`).
+        1.  Configure `wrangler.toml`.
+        2.  Implement the AI handler (using Workers AI or proxying to LLM provider).
+        3.  Expose an endpoint for the Next.js app to call.
+        *Alternative:* If using Vercel AI SDK directly in Next.js, ensure it's optimized. But the requirement specifies "configure a worker AI with wrangler".
+      </thinking_guidance>
+      <action>
+        Initialize a Cloudflare Worker using `wrangler init`. Configure it to handle the chat completion logic (or specific AI tasks). Deploy using `wrangler deploy`.
+      </action>
+      <validation>
+        <execution_success>
+          ✅ Worker is deployed and accessible.
+          ✅ `wrangler` commands execute successfully.
+        </execution_success>
+      </validation>
+    </step>
+
+    <step number="4">
+      <title>Implement Chat API &amp; UI</title>
+      <thinking_guidance>
+        Connect the pieces.
+        1.  **UI:** Shadcn Chat interface. Image upload button uploads to Blob, then sends URL to Chat API.
+        2.  **API:** Next.js API route calls the Cloudflare Worker (or uses it as a proxy) for the AI response.
+        3.  **Tools:** Implement `createServiceTicket` tool (likely needs to be handled in the Worker or passed through).
+      </thinking_guidance>
+      <action>
+        Build the Chat UI with image upload support. Connect to the backend. Ensure the AI can see the image (multimodal capability) and create tickets.
+      </action>
+    </step>
+  </instructions>
+
+  <output_format>
+    <structure>
+      <section name="execution_log">
+        Log of schema changes, Blob setup, Worker deployment, and UI implementation.
+      </section>
+      <section name="results">
+        Demonstration of chat with image upload and ticket creation.
+      </section>
+    </structure>
+    <format>Markdown</format>
+  </output_format>
+</prompt>

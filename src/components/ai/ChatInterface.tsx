@@ -1,66 +1,53 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, Bot, User, Image as ImageIcon, Loader2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { upload } from "@vercel/blob/client";
 import { toast } from "sonner";
 import { createAssistanceRequest } from "@/app/actions/request";
 import { useRouter } from "next/navigation";
 
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+}
+
 interface ChatInterfaceProps {
   vehicleContext?: string;
 }
 
-export function ChatInterface({ vehicleContext }: ChatInterfaceProps) {
-  const { messages, status, sendMessage } = useChat({
-    id: "mechanic-ai",
-  });
+const WORKER_URL = process.env.NEXT_PUBLIC_AI_WORKER_URL || "https://ai-worker.agusmontoya.workers.dev";
 
+export function ChatInterface({ vehicleContext }: ChatInterfaceProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const router = useRouter();
 
-  const isLoading = status === "streaming" || status === "submitted";
-
-  // Helper to extract text from message parts
-  const getMessageText = (message: typeof messages[0]): string => {
-    if (!message.parts) return "";
-    return message.parts
-      .filter((part): part is { type: "text"; text: string } => part.type === "text")
-      .map((part) => part.text)
-      .join("");
-  };
-
-  // Effect to listen for AI response completion and check for JSON actions
-  useEffect(() => {
-    if (status === "ready" && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === "assistant") {
-        const content = getMessageText(lastMessage);
-        const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
-
-        if (jsonMatch && jsonMatch[1]) {
-          try {
-            const actionData = JSON.parse(jsonMatch[1]);
-            if (actionData.action === "create_ticket") {
-              handleCreateTicket(actionData.data);
-            }
-          } catch (e) {
-            console.error("Error parsing AI action:", e);
-          }
+  // Check for JSON actions in assistant messages
+  const checkForActions = useCallback((content: string) => {
+    const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        const actionData = JSON.parse(jsonMatch[1]);
+        if (actionData.action === "create_ticket") {
+          handleCreateTicket(actionData.data);
         }
+      } catch (e) {
+        console.error("Error parsing AI action:", e);
       }
     }
-  }, [messages, status]);
+  }, []);
 
   const handleCreateTicket = async (data: { serviceType: string; description: string }) => {
     toast.loading("Creando solicitud de asistencia...");
