@@ -121,6 +121,87 @@ export function ChatInterface({ vehicleContext }: ChatInterfaceProps) {
     setImageUrl(null);
   };
 
+  const getMessageText = (m: Message) => {
+    // Hide the JSON action block from the UI
+    return m.content.replace(/```json[\s\S]*?```/g, "").trim();
+  };
+
+  const sendMessage = async ({ text }: { text: string }) => {
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: text,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+          vehicleContext,
+        }),
+      });
+
+      if (!response.ok) throw new Error(response.statusText);
+
+      const reader = response.body?.getReader();
+      if (!reader) return;
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "",
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      const decoder = new TextDecoder();
+      let assistantContent = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith('0:')) {
+            try {
+              const text = JSON.parse(line.slice(2));
+              assistantContent += text;
+              
+              setMessages((prev) => {
+                const newMessages = [...prev];
+                const lastMsg = newMessages[newMessages.length - 1];
+                if (lastMsg.role === "assistant") {
+                    lastMsg.content = assistantContent;
+                }
+                return newMessages;
+              });
+            } catch (e) {
+              console.error("Error parsing stream:", e);
+            }
+          }
+        }
+      }
+      
+      checkForActions(assistantContent);
+
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al enviar mensaje");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
