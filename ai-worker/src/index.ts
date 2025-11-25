@@ -38,18 +38,18 @@ export default {
                 
                 Instrucciones:
                 1. Analiza el vehículo y el historial.
-                2. Genera una lista de servicios recomendados.
+                2. Genera una lista de servicios recomendados (MÁXIMO 3 SERVICIOS).
                 3. Asigna urgencia (low, medium, high) y costo estimado en Bolivianos (Bs).
-                4. Genera un resumen corto.
+                4. Genera un resumen corto y conciso (máximo 2 oraciones).
                 
                 IMPORTANTE: Tu respuesta DEBE ser SOLAMENTE un objeto JSON válido con la siguiente estructura, sin texto adicional ni bloques de código markdown:
                 {
-                  "summary": "Resumen del análisis...",
+                  "summary": "Resumen corto...",
                   "services": [
                     {
                       "service": "Nombre del servicio",
                       "urgency": "high",
-                      "reason": "Razón técnica...",
+                      "reason": "Razón breve...",
                       "estimatedCost": "Bs. 500"
                     }
                   ]
@@ -58,9 +58,10 @@ export default {
                 const response = await ai.run('@cf/meta/llama-3-8b-instruct', {
                     messages: [
                         { role: 'system', content: systemPrompt },
-                        { role: 'user', content: "Genera el reporte de mantenimiento." }
+                        { role: 'user', content: "Genera el reporte JSON." }
                     ],
-                    stream: false, // We want the full JSON
+                    stream: false,
+                    max_tokens: 1024, // Ensure enough tokens for JSON
                 });
 
                 // Llama 3 might wrap in markdown code block, try to clean it
