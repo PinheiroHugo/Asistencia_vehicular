@@ -143,7 +143,7 @@ export function ChatInterface({ vehicleContext }: ChatInterfaceProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot className="h-6 w-6 text-primary" />
-          Hugo - Tu Mecánico IA
+          Hugo de Asistencia Vehicular AI
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden p-0">
