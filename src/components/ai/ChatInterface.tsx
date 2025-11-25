@@ -1,13 +1,6 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-
-interface Message {
-  id: string;
-  role: 'function' | 'data' | 'system' | 'user' | 'assistant' | 'tool';
-  content: string;
-  data?: Record<string, unknown>;
-}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,24 +18,36 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({ vehicleContext }: ChatInterfaceProps) {
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    body: { vehicleContext },
-  } as any) as any;
-  
+  const { messages, status, sendMessage } = useChat({
+    id: "mechanic-ai",
+  });
+
+  const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const router = useRouter();
 
+  const isLoading = status === "streaming" || status === "submitted";
+
+  // Helper to extract text from message parts
+  const getMessageText = (message: typeof messages[0]): string => {
+    if (!message.parts) return "";
+    return message.parts
+      .filter((part): part is { type: "text"; text: string } => part.type === "text")
+      .map((part) => part.text)
+      .join("");
+  };
+
   // Effect to listen for AI response completion and check for JSON actions
   useEffect(() => {
-    if (!isLoading && messages.length > 0) {
+    if (status === "ready" && messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage.role === "assistant") {
-        const content = lastMessage.content;
+        const content = getMessageText(lastMessage);
         const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
-        
+
         if (jsonMatch && jsonMatch[1]) {
           try {
             const actionData = JSON.parse(jsonMatch[1]);
@@ -55,7 +60,7 @@ export function ChatInterface({ vehicleContext }: ChatInterfaceProps) {
         }
       }
     }
-  }, [messages, isLoading]);
+  }, [messages, status]);
 
   const handleCreateTicket = async (data: { serviceType: string; description: string }) => {
     toast.loading("Creando solicitud de asistencia...");
@@ -113,41 +118,19 @@ export function ChatInterface({ vehicleContext }: ChatInterfaceProps) {
     }
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() && !imageUrl) return;
 
-    // Append image URL to message if exists
-    // Note: This is a simplification. Ideally we'd use experimental_attachments or similar
-    // but for now we'll just append it to the text or handle it in the worker.
-    // However, useChat doesn't easily support custom fields without experimental features.
-    // We will append it to the content for the worker to parse.
-    
-    const content = imageUrl ? `${input}\n\n[Imagen adjunta](${imageUrl})` : input;
-    
-    // We need to manually trigger handleSubmit with the modified content or just let the worker handle the URL in the body
-    // But useChat handles the input state. 
-    // A better approach with standard useChat is to let the user send the text, and we modify the request body.
-    // But we can't easily modify the body per request in the hook config dynamically for just one message.
-    
-    // Workaround: We'll just let the user send the text, and if there's an image, we'll clear it after send.
-    // The worker will need to parse the markdown image or we need to find a way to send it.
-    
-    // Actually, let's just append the image markdown to the input before submitting if we can, 
-    // or better, just send it as part of the message content.
-    
-    // Since we can't easily modify the input state programmatically without triggering a re-render loop or fighting the hook,
-    // we will rely on the user typing. If they uploaded an image, we'll assume they want to talk about it.
-    
-    // Let's try to use the `data` field or just append to text.
-    // For this MVP, appending to text is safest.
-    
+    // Build the message content
+    let messageContent = input.trim();
     if (imageUrl) {
-       // We can't easily modify 'input' here to include the image URL without changing the hook's state.
-       // So we will just pass it.
+      messageContent += `\n\n[Imagen adjunta](${imageUrl})`;
     }
-    
-    handleSubmit(e, { data: { imageUrl } });
+
+    // Send message using the new API
+    await sendMessage({ text: messageContent });
+    setInput("");
     setImageUrl(null);
   };
 
@@ -173,7 +156,7 @@ export function ChatInterface({ vehicleContext }: ChatInterfaceProps) {
               </div>
             )}
             
-            {messages.map((m: Message) => (
+            {messages.map((m) => (
               <div
                 key={m.id}
                 className={`flex gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}
@@ -183,26 +166,15 @@ export function ChatInterface({ vehicleContext }: ChatInterfaceProps) {
                     <AvatarFallback className="bg-primary text-primary-foreground"><Bot className="h-4 w-4" /></AvatarFallback>
                   </Avatar>
                 )}
-                
+
                 <div
-                  className={`rounded-lg px-4 py-2 max-w-[80%] text-sm ${
+                  className={`rounded-lg px-4 py-2 max-w-[80%] text-sm whitespace-pre-wrap ${
                     m.role === "user"
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted"
                   }`}
                 >
-                  {m.content}
-                  {m.data && (m.data as any).imageUrl && (
-                    <img 
-                      src={(m.data as any).imageUrl} 
-                      alt="Uploaded" 
-                      className="mt-2 rounded-md max-w-full h-auto max-h-48 object-cover" 
-                    />
-                  )}
-                  {/* Also check for markdown images if we fallback to that */}
-                  {m.content.includes("![image]") && (
-                     <div className="mt-2 text-xs text-muted-foreground">[Imagen procesada]</div>
-                  )}
+                  {getMessageText(m)}
                 </div>
 
                 {m.role === "user" && (
@@ -262,12 +234,12 @@ export function ChatInterface({ vehicleContext }: ChatInterfaceProps) {
 
           <Input
             value={input}
-            onChange={handleInputChange}
+            onChange={(e) => setInput(e.target.value)}
             placeholder="Escribe tu consulta..."
             disabled={isLoading}
             className="flex-1"
           />
-          <Button type="submit" size="icon" disabled={isLoading || (!input.trim() && !imageUrl)}>
+          <Button type="submit" size="icon" disabled={isLoading || (!(input || "").trim() && !imageUrl)}>
             <Send className="h-4 w-4" />
           </Button>
         </form>
